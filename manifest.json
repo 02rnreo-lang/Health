@@ -1,0 +1,8 @@
+{
+  "name": "주 5일 근비대 루틴",
+  "short_name": "근비대루틴",
+  "start_url": "./Index.html",
+  "display": "standalone",
+  "background_color": "#0f1115",
+  "theme_color": "#0f1115"
+}
