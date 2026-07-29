@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>주 5일 근비대 루틴</title>
+    <!-- 독립 앱 실행을 위한 설정 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f1115">
     <style>
         :root {
             --bg-color: #0f1115;
@@ -22,11 +25,10 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding-bottom: 70px; /* for bottom nav */
+            padding-bottom: 70px;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Header Info */
         .top-header {
             background-color: #000;
             padding: 15px;
@@ -39,7 +41,6 @@
         .top-header h1 { font-size: 1.2rem; color: #ffcc00; margin-bottom: 5px; }
         .routine-summary { font-size: 0.8rem; color: var(--text-sub); display: flex; justify-content: space-around; }
 
-        /* Container */
         .container { padding: 15px; }
         .day-section { display: none; }
         .day-section.active { display: block; }
@@ -52,7 +53,6 @@
             border-bottom: 2px solid;
         }
 
-        /* Exercise Card */
         .exercise-card {
             background-color: var(--card-bg);
             border-radius: 10px;
@@ -75,7 +75,6 @@
             line-height: 1.4;
         }
 
-        /* Set Checkboxes */
         .sets-container { display: flex; gap: 10px; flex-wrap: wrap; }
         .set-circle {
             width: 36px;
@@ -96,7 +95,6 @@
             font-weight: bold;
         }
 
-        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -118,19 +116,14 @@
         }
         .nav-item.active { color: #fff; background-color: rgba(255,255,255,0.1); }
 
-        /* Day Colors */
         .color-mon { border-color: var(--accent-red); color: var(--accent-red); }
         .bg-mon.completed { background-color: var(--accent-red); }
-        
         .color-tue { border-color: var(--accent-blue); color: var(--accent-blue); }
         .bg-tue.completed { background-color: var(--accent-blue); }
-        
         .color-wed { border-color: var(--accent-green); color: var(--accent-green); }
         .bg-wed.completed { background-color: var(--accent-green); }
-        
         .color-thu { border-color: var(--accent-yellow); color: var(--accent-yellow); }
         .bg-thu.completed { background-color: var(--accent-yellow); }
-        
         .color-fri { border-color: var(--accent-purple); color: var(--accent-purple); }
         .bg-fri.completed { background-color: var(--accent-purple); }
     </style>
@@ -146,12 +139,10 @@
         </div>
     </div>
 
-    <div class="container" id="app-container">
-        <!-- Content will be injected by JS -->
-    </div>
+    <div class="container" id="app-container"></div>
 
     <div class="bottom-nav" id="bottom-nav">
-        <div class="nav-item active" data-day="mon">월</div>
+        <div class="nav-item" data-day="mon">월</div>
         <div class="nav-item" data-day="tue">화</div>
         <div class="nav-item" data-day="wed">수</div>
         <div class="nav-item" data-day="thu">목</div>
@@ -237,13 +228,25 @@
             }
         };
 
+        const todayIndex = new Date().getDay();
+        const dayMap = { 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri' };
+        const currentDay = dayMap[todayIndex] || 'info'; 
+
         const container = document.getElementById('app-container');
         const navItems = document.querySelectorAll('.nav-item');
 
         function renderApp() {
             let html = '';
+            navItems.forEach(item => {
+                if (item.getAttribute('data-day') === currentDay) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
             for (const [day, data] of Object.entries(routineData)) {
-                html += `<div class="day-section ${day === 'mon' ? 'active' : ''}" id="${day}">`;
+                html += `<div class="day-section ${day === currentDay ? 'active' : ''}" id="${day}">`;
                 html += `<div class="day-title ${data.colorClass}">${data.title}</div>`;
                 
                 if (day === 'info') {
@@ -255,7 +258,7 @@
                                 <div class="exercise-header">
                                     <div class="exercise-name">${exIndex + 1}. ${ex.name}</div>
                                     <div class="exercise-sets-info">${ex.sets}세트</div>
-                                </div>
+                                }
                                 ${ex.point ? `<div class="exercise-point">✓ ${ex.point}</div>` : ''}
                                 <div class="sets-container">
                         `;
@@ -272,18 +275,14 @@
 
         function toggleSet(element) {
             element.classList.toggle('completed');
-            // 진동 피드백 (모바일 지원 기기 한정)
             if (navigator.vibrate) navigator.vibrate(50);
         }
 
-        // Navigation Logic
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
-                // Update Nav
                 navItems.forEach(nav => nav.classList.remove('active'));
                 e.target.classList.add('active');
                 
-                // Update Content
                 const targetDay = e.target.getAttribute('data-day');
                 document.querySelectorAll('.day-section').forEach(section => {
                     section.classList.remove('active');
@@ -293,7 +292,6 @@
             });
         });
 
-        // Initialize
         renderApp();
     </script>
 </body>
