@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>주 5일 근비대 루틴</title>
+    <style>
+        :root {
+            --bg-color: #0f1115;
+            --card-bg: #1e222a;
+            --text-main: #ffffff;
+            --text-sub: #a0aabf;
+            --accent-red: #ff4757;
+            --accent-blue: #1e90ff;
+            --accent-green: #2ed573;
+            --accent-yellow: #ffa502;
+            --accent-purple: #9c88ff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: 70px; /* for bottom nav */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Header Info */
+        .top-header {
+            background-color: #000;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .top-header h1 { font-size: 1.2rem; color: #ffcc00; margin-bottom: 5px; }
+        .routine-summary { font-size: 0.8rem; color: var(--text-sub); display: flex; justify-content: space-around; }
+
+        /* Container */
+        .container { padding: 15px; }
+        .day-section { display: none; }
+        .day-section.active { display: block; }
+        
+        .day-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+
+        /* Exercise Card */
+        .exercise-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        
+        .exercise-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .exercise-name { font-size: 1.1rem; font-weight: bold; }
+        .exercise-sets-info { font-size: 0.9rem; color: var(--text-sub); }
+        
+        .exercise-point {
+            font-size: 0.85rem;
+            color: #d1d8e0;
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        /* Set Checkboxes */
+        .sets-container { display: flex; gap: 10px; flex-wrap: wrap; }
+        .set-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .set-circle.completed {
+            border-color: transparent;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #1a1d24;
+            display: flex;
+            border-top: 1px solid #333;
+            z-index: 100;
+        }
+        .nav-item {
+            flex: 1;
+            padding: 15px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .nav-item.active { color: #fff; background-color: rgba(255,255,255,0.1); }
+
+        /* Day Colors */
+        .color-mon { border-color: var(--accent-red); color: var(--accent-red); }
+        .bg-mon.completed { background-color: var(--accent-red); }
+        
+        .color-tue { border-color: var(--accent-blue); color: var(--accent-blue); }
+        .bg-tue.completed { background-color: var(--accent-blue); }
+        
+        .color-wed { border-color: var(--accent-green); color: var(--accent-green); }
+        .bg-wed.completed { background-color: var(--accent-green); }
+        
+        .color-thu { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+        .bg-thu.completed { background-color: var(--accent-yellow); }
+        
+        .color-fri { border-color: var(--accent-purple); color: var(--accent-purple); }
+        .bg-fri.completed { background-color: var(--accent-purple); }
+    </style>
+</head>
+<body>
+
+    <div class="top-header">
+        <h1>주 5일 근비대 루틴 (60분)</h1>
+        <div class="routine-summary">
+            <span>⏱️ 60~90초 휴식</span>
+            <span>🔄 8~12회 반복</span>
+            <span>🔥 RPE 8~9</span>
+        </div>
+    </div>
+
+    <div class="container" id="app-container">
+        <!-- Content will be injected by JS -->
+    </div>
+
+    <div class="bottom-nav" id="bottom-nav">
+        <div class="nav-item active" data-day="mon">월</div>
+        <div class="nav-item" data-day="tue">화</div>
+        <div class="nav-item" data-day="wed">수</div>
+        <div class="nav-item" data-day="thu">목</div>
+        <div class="nav-item" data-day="fri">금</div>
+        <div class="nav-item" data-day="info">요약</div>
+    </div>
+
+    <script>
+        const routineData = {
+            "mon": {
+                title: "월요일: 가슴 + 삼두", colorClass: "color-mon", bgClass: "bg-mon",
+                exercises: [
+                    { name: "가슴운동 ①", sets: 4, point: "가장 무겁게 하는 주력 운동" },
+                    { name: "가슴운동 ②", sets: 3, point: "다른 각도 (중량 운동)" },
+                    { name: "가슴운동 ③", sets: 3, point: "고립 (펌핑) 운동" },
+                    { name: "삼두운동 ①", sets: 3, point: "" },
+                    { name: "삼두운동 ②", sets: 2, point: "삼두는 과하지 않게, 가슴 자극에 집중" }
+                ]
+            },
+            "tue": {
+                title: "화요일: 등 + 이두", colorClass: "color-tue", bgClass: "bg-tue",
+                exercises: [
+                    { name: "등운동 ①", sets: 4, point: "가장 무겁게 하는 주력 운동" },
+                    { name: "등운동 ②", sets: 3, point: "다른 각도" },
+                    { name: "등운동 ③", sets: 3, point: "고립 운동" },
+                    { name: "후면어깨", sets: 3, point: "후면어깨로 밸런스 보완" },
+                    { name: "이두운동 ①", sets: 3, point: "" },
+                    { name: "이두운동 ②", sets: 2, point: "이두는 보조적으로 자극" }
+                ]
+            },
+            "wed": {
+                title: "수요일: 하체", colorClass: "color-wed", bgClass: "bg-wed",
+                exercises: [
+                    { name: "하체운동 ① (대퇴사두)", sets: 4, point: "하체는 자세를 우선" },
+                    { name: "하체운동 ② (복합)", sets: 3, point: "①, ②는 복합 운동 위주" },
+                    { name: "하체운동 ③ (햄스트링)", sets: 3, point: "햄스트링 + 종아리까지 균형 있게" },
+                    { name: "하체운동 ④ (대퇴사두)", sets: 3, point: "" },
+                    { name: "종아리", sets: 3, point: "" }
+                ]
+            },
+            "thu": {
+                title: "목요일: 어깨", colorClass: "color-thu", bgClass: "bg-thu",
+                exercises: [
+                    { name: "프레스운동", sets: 4, point: "프레스운동을 가장 먼저 (바이킹 프레스 추천)" },
+                    { name: "측면어깨 ①", sets: 4, point: "측면 + 후면 균형 중요" },
+                    { name: "후면어깨", sets: 3, point: "승모는 필요 시만 추가" },
+                    { name: "측면어깨 ② 또는 승모", sets: 3, point: "" }
+                ]
+            },
+            "fri": {
+                title: "금요일: 하체 + 보완", colorClass: "color-fri", bgClass: "bg-fri",
+                exercises: [
+                    { name: "하체운동 ⑤ (둔근·햄스트링)", sets: 4, point: "하체 후면 강화에 집중" },
+                    { name: "하체운동 ⑥", sets: 3, point: "상체 보완으로 밸런스 유지" },
+                    { name: "가슴운동 ④", sets: 3, point: "팔은 약한 부위 위주로" },
+                    { name: "등운동 ④", sets: 3, point: "" },
+                    { name: "팔 약점 (이두 또는 삼두)", sets: 2, point: "" }
+                ]
+            },
+            "info": {
+                title: "주간 총 볼륨 & TIP", colorClass: "color-thu", bgClass: "bg-thu",
+                content: `
+                    <div style="background:#1e222a; padding:15px; border-radius:10px; margin-bottom:15px;">
+                        <h3 style="color:#ffcc00; margin-bottom:10px;">📊 세트 수 요약</h3>
+                        <ul style="list-style:none; line-height:1.8; color:#d1d8e0;">
+                            <li>• <b>가슴:</b> 13세트</li>
+                            <li>• <b>등:</b> 13세트</li>
+                            <li>• <b>어깨:</b> 13~14세트</li>
+                            <li>• <b>하체:</b> 20세트 내외 <span style="color:#2ed573;">(볼륨 높게!)</span></li>
+                            <li>• <b>팔(이두/삼두):</b> 12세트 내외</li>
+                        </ul>
+                    </div>
+                    <div style="background:#1e222a; padding:15px; border-radius:10px;">
+                        <h3 style="color:#ffcc00; margin-bottom:10px;">💡 진행 방법</h3>
+                        <ul style="list-style:none; line-height:1.6; font-size:0.9rem; color:#d1d8e0;">
+                            <li>1. 운동 ① = 가장 무겁게 하는 주력 운동</li>
+                            <li>2. 8~12회 가능한 무게, 마지막 1~2회가 힘든 정도</li>
+                            <li>3. 휴식은 60~90초</li>
+                            <li>4. 같은 무게로 목표 반복을 모두 달성하면 다음 운동에서 중량 UP!</li>
+                        </ul>
+                    </div>
+                `
+            }
+        };
+
+        const container = document.getElementById('app-container');
+        const navItems = document.querySelectorAll('.nav-item');
+
+        function renderApp() {
+            let html = '';
+            for (const [day, data] of Object.entries(routineData)) {
+                html += `<div class="day-section ${day === 'mon' ? 'active' : ''}" id="${day}">`;
+                html += `<div class="day-title ${data.colorClass}">${data.title}</div>`;
+                
+                if (day === 'info') {
+                    html += data.content;
+                } else {
+                    data.exercises.forEach((ex, exIndex) => {
+                        html += `
+                            <div class="exercise-card">
+                                <div class="exercise-header">
+                                    <div class="exercise-name">${exIndex + 1}. ${ex.name}</div>
+                                    <div class="exercise-sets-info">${ex.sets}세트</div>
+                                </div>
+                                ${ex.point ? `<div class="exercise-point">✓ ${ex.point}</div>` : ''}
+                                <div class="sets-container">
+                        `;
+                        for (let i = 1; i <= ex.sets; i++) {
+                            html += `<div class="set-circle ${data.bgClass}" onclick="toggleSet(this)">${i}</div>`;
+                        }
+                        html += `</div></div>`;
+                    });
+                }
+                html += `</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function toggleSet(element) {
+            element.classList.toggle('completed');
+            // 진동 피드백 (모바일 지원 기기 한정)
+            if (navigator.vibrate) navigator.vibrate(50);
+        }
+
+        // Navigation Logic
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                // Update Nav
+                navItems.forEach(nav => nav.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // Update Content
+                const targetDay = e.target.getAttribute('data-day');
+                document.querySelectorAll('.day-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(targetDay).classList.add('active');
+                window.scrollTo(0, 0);
+            });
+        });
+
+        // Initialize
+        renderApp();
+    </script>
+</body>
+</html>
