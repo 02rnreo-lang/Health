@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>주 5일 근비대 루틴</title>
-    <!-- 독립 앱 실행을 위한 설정 -->
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f1115">
     <style>
         :root {
@@ -101,10 +99,8 @@
             color: var(--text-sub);
             background: rgba(255,255,255,0.02);
         }
-        .set-circle.add-btn:active {
-            transform: scale(0.95);
-        }
 
+        /* 하단 네비게이션 (7개 아이콘 대응) */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -117,9 +113,9 @@
         }
         .nav-item {
             flex: 1;
-            padding: 15px 0;
+            padding: 12px 0;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: var(--text-sub);
             font-weight: bold;
             cursor: pointer;
@@ -136,6 +132,29 @@
         .bg-thu.completed { background-color: var(--accent-yellow); }
         .color-fri { border-color: var(--accent-purple); color: var(--accent-purple); }
         .bg-fri.completed { background-color: var(--accent-purple); }
+
+        /* 달력 스타일 */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 1.2rem; font-weight: bold; }
+        .calendar-btn { background: #2c3240; border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .cal-day-head { font-size: 0.8rem; color: var(--text-sub); padding-bottom: 5px; font-weight: bold; }
+        .cal-day-cell { 
+            background-color: var(--card-bg); 
+            min-height: 48px;
+            border-radius: 8px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.85rem; 
+            cursor: pointer; 
+            position: relative;
+            border: 1px solid transparent;
+        }
+        .cal-day-cell.today { border-color: var(--accent-blue); font-weight: bold; }
+        .cal-day-cell.selected { background-color: #2e3646; border-color: var(--accent-green); }
+        .cal-day-cell.has-log::after { content: '🔥'; font-size: 0.65rem; margin-top: 2px; }
+        .log-detail-box { background: var(--card-bg); padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -157,6 +176,7 @@
         <div class="nav-item" data-day="wed">수</div>
         <div class="nav-item" data-day="thu">목</div>
         <div class="nav-item" data-day="fri">금</div>
+        <div class="nav-item" data-day="cal">달력</div>
         <div class="nav-item" data-day="info">요약</div>
     </div>
 
@@ -212,6 +232,9 @@
                     { name: "팔 약점 (이두 또는 삼두)", sets: 3, point: "" }
                 ]
             },
+            "cal": {
+                title: "운동 기록 달력", colorClass: "color-wed"
+            },
             "info": {
                 title: "주간 총 볼륨 & TIP", colorClass: "color-thu", bgClass: "bg-thu",
                 content: `
@@ -231,22 +254,47 @@
                             <li>1. 운동 ① = 가장 무겁게 하는 주력 운동</li>
                             <li>2. 8~12회 가능한 무게, 마지막 1~2회가 힘든 정도</li>
                             <li>3. 휴식은 60~90초</li>
-                            <li>4. <b>+ 버튼을 눌러 원할 때 언제든 세트 추가 가능!</b></li>
+                            <li>4. <b>+ 버튼을 눌러 세트 추가 가능</b></li>
+                            <li>5. 체크한 운동 세트는 <b>달력 탭에 자동으로 기록</b>됩니다.</li>
                         </ul>
                     </div>
                 `
             }
         };
 
+        let currentCalDate = new Date();
+
+        function getTodayStr() {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getLogs() {
+            return JSON.parse(localStorage.getItem('gym_workout_logs') || '{}');
+        }
+
+        function saveLogs(logs) {
+            localStorage.setItem('gym_workout_logs', JSON.stringify(logs));
+        }
+
+        function getTodaySets() {
+            return JSON.parse(localStorage.getItem(`sets_${getTodayStr()}`) || '[]');
+        }
+
         const todayIndex = new Date().getDay();
         const dayMap = { 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri' };
-        const currentDay = dayMap[todayIndex] || 'info'; 
+        let currentDay = dayMap[todayIndex] || 'info'; 
 
         const container = document.getElementById('app-container');
         const navItems = document.querySelectorAll('.nav-item');
 
         function renderApp() {
             let html = '';
+            const todaySets = getTodaySets();
+
             navItems.forEach(item => {
                 if (item.getAttribute('data-day') === currentDay) {
                     item.classList.add('active');
@@ -261,6 +309,16 @@
                 
                 if (day === 'info') {
                     html += data.content;
+                } else if (day === 'cal') {
+                    html += `
+                        <div class="calendar-header">
+                            <button class="calendar-btn" onclick="changeMonth(-1)">◀ 이전</button>
+                            <span id="cal-month-title"></span>
+                            <button class="calendar-btn" onclick="changeMonth(1)">다음 ▶</button>
+                        </div>
+                        <div class="calendar-grid" id="calendar-grid"></div>
+                        <div class="log-detail-box" id="log-detail-content"></div>
+                    `;
                 } else {
                     data.exercises.forEach((ex, exIndex) => {
                         html += `
@@ -273,9 +331,10 @@
                                 <div class="sets-container" id="sets-${day}-${exIndex}">
                         `;
                         for (let i = 1; i <= ex.sets; i++) {
-                            html += `<div class="set-circle ${data.bgClass}" onclick="toggleSet(this)">${i}</div>`;
+                            const setId = `${day}-${exIndex}-${i}`;
+                            const isCompleted = todaySets.includes(setId);
+                            html += `<div class="set-circle ${data.bgClass} ${isCompleted ? 'completed' : ''}" data-set-id="${setId}" onclick="toggleSet(this, '${setId}', '${day}')">${i}</div>`;
                         }
-                        // 세트 추가 버튼 (+)
                         html += `<div class="set-circle add-btn" onclick="addSet('${day}', ${exIndex})">+</div>`;
                         html += `</div></div>`;
                     });
@@ -283,32 +342,134 @@
                 html += `</div>`;
             }
             container.innerHTML = html;
+
+            if (currentDay === 'cal') {
+                renderCalendar();
+            }
         }
 
-        function toggleSet(element) {
+        function toggleSet(element, setId, day) {
             element.classList.toggle('completed');
             if (navigator.vibrate) navigator.vibrate(50);
+
+            const completedSets = [];
+            document.querySelectorAll(`.day-section#${day} .set-circle.completed:not(.add-btn)`).forEach(el => {
+                if (el.dataset.setId) completedSets.push(el.dataset.setId);
+            });
+
+            const today = getTodayStr();
+            localStorage.setItem(`sets_${today}`, JSON.stringify(completedSets));
+
+            const logs = getLogs();
+            if (completedSets.length > 0) {
+                logs[today] = {
+                    title: routineData[day]?.title || '운동 완료',
+                    count: completedSets.length
+                };
+            } else {
+                delete logs[today];
+            }
+            saveLogs(logs);
         }
 
         function addSet(day, exIndex) {
             routineData[day].exercises[exIndex].sets++;
             const newSetsCount = routineData[day].exercises[exIndex].sets;
             
-            // 상단 세트 수 글자 업데이트
             const infoEl = document.getElementById(`info-${day}-${exIndex}`);
             if (infoEl) infoEl.textContent = `${newSetsCount}세트`;
 
-            // 세트 컨테이너에 새로운 세트 원형 추가 (+ 버튼 바로 앞으로)
             const containerEl = document.getElementById(`sets-${day}-${exIndex}`);
             if (containerEl) {
                 const addButton = containerEl.querySelector('.add-btn');
                 const newCircle = document.createElement('div');
+                const setId = `${day}-${exIndex}-${newSetsCount}`;
                 newCircle.className = `set-circle ${routineData[day].bgClass}`;
+                newCircle.setAttribute('data-set-id', setId);
                 newCircle.textContent = newSetsCount;
-                newCircle.onclick = function() { toggleSet(this); };
+                newCircle.onclick = function() { toggleSet(this, setId, day); };
                 containerEl.insertBefore(newCircle, addButton);
             }
             if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        function renderCalendar() {
+            const year = currentCalDate.getFullYear();
+            const month = currentCalDate.getMonth();
+            
+            const monthTitle = document.getElementById('cal-month-title');
+            if (monthTitle) monthTitle.textContent = `${year}년 ${month + 1}월`;
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+            
+            const logs = getLogs();
+            const todayStr = getTodayStr();
+            
+            let gridHtml = `
+                <div class="cal-day-head" style="color:#ff4757;">일</div>
+                <div class="cal-day-head">월</div>
+                <div class="cal-day-head">화</div>
+                <div class="cal-day-head">수</div>
+                <div class="cal-day-head">목</div>
+                <div class="cal-day-head">금</div>
+                <div class="cal-day-head" style="color:#1e90ff;">토</div>
+            `;
+            
+            for (let i = 0; i < firstDay; i++) {
+                gridHtml += `<div></div>`;
+            }
+            
+            for (let d = 1; d <= lastDate; d++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = dateStr === todayStr;
+                const hasLog = !!logs[dateStr];
+                
+                gridHtml += `
+                    <div class="cal-day-cell ${isToday ? 'today' : ''} ${hasLog ? 'has-log' : ''}" 
+                         id="cell-${dateStr}" onclick="selectCalDate('${dateStr}')">
+                        <span>${d}</span>
+                    </div>
+                `;
+            }
+            
+            const gridEl = document.getElementById('calendar-grid');
+            if (gridEl) gridEl.innerHTML = gridHtml;
+
+            selectCalDate(todayStr);
+        }
+
+        function changeMonth(delta) {
+            currentCalDate.setMonth(currentCalDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function selectCalDate(dateStr) {
+            document.querySelectorAll('.cal-day-cell').forEach(c => c.classList.remove('selected'));
+            const cell = document.getElementById(`cell-${dateStr}`);
+            if (cell) cell.classList.add('selected');
+
+            const logs = getLogs();
+            const log = logs[dateStr];
+            const detailEl = document.getElementById('log-detail-content');
+
+            const [y, m, d] = dateStr.split('-');
+            const displayDate = `${y}년 ${parseInt(m)}월 ${parseInt(d)}일`;
+
+            if (detailEl) {
+                if (log) {
+                    detailEl.innerHTML = `
+                        <h4 style="color:#2ed573; margin-bottom:8px;">📅 ${displayDate}</h4>
+                        <p style="font-size:1.1rem; font-weight:bold; color:#fff;">${log.title}</p>
+                        <p style="color:var(--text-sub); margin-top:6px; font-size:0.9rem;">총 <b style="color:#ffcc00;">${log.count}세트</b> 완료! 🔥</p>
+                    `;
+                } else {
+                    detailEl.innerHTML = `
+                        <h4 style="color:var(--text-sub); margin-bottom:8px;">📅 ${displayDate}</h4>
+                        <p style="color:#a0aabf; font-size:0.9rem;">운동 기록이 없습니다.</p>
+                    `;
+                }
+            }
         }
 
         navItems.forEach(item => {
@@ -316,11 +477,15 @@
                 navItems.forEach(nav => nav.classList.remove('active'));
                 e.target.classList.add('active');
                 
-                const targetDay = e.target.getAttribute('data-day');
+                currentDay = e.target.getAttribute('data-day');
                 document.querySelectorAll('.day-section').forEach(section => {
                     section.classList.remove('active');
                 });
-                document.getElementById(targetDay).classList.add('active');
+                document.getElementById(currentDay).classList.add('active');
+                
+                if (currentDay === 'cal') {
+                    renderCalendar();
+                }
                 window.scrollTo(0, 0);
             });
         });
