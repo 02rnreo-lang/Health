@@ -307,7 +307,7 @@
             return JSON.parse(localStorage.getItem(`sets_${getTodayStr()}`) || '[]');
         }
 
-        const todayIndex = new Date().getDay(); // 0: 일, 1: 월, 2: 화, 3: 수, 4: 목, 5: 금, 6: 토
+        const todayIndex = new Date().getDay();
         const dayMap = { 0: 'sun', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat' };
         let currentDay = dayMap[todayIndex] || 'info'; 
 
@@ -393,8 +393,14 @@
 
             const logs = getLogs();
             if (completedSets.length > 0) {
+                // '월요일: 등 + 이두'에서 요일 부분을 제거하고 '등 + 이두'만 남겨서 기록
+                let cleanTitle = routineData[day]?.title || '운동 완료';
+                if (cleanTitle.includes(':')) {
+                    cleanTitle = cleanTitle.split(':')[1].trim();
+                }
+
                 logs[today] = {
-                    title: routineData[day]?.title || '운동 완료',
+                    title: cleanTitle,
                     count: completedSets.length
                 };
             } else {
@@ -467,7 +473,6 @@
             const gridEl = document.getElementById('calendar-grid');
             if (gridEl) gridEl.innerHTML = gridHtml;
 
-            // 현재 보고 있는 달에 오늘 날짜가 포함되어 있으면 오늘 선택, 아니면 해당 월 1일 선택
             const currentYearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
             const targetSelectDate = todayStr.startsWith(currentYearMonth) ? todayStr : `${currentYearMonth}-01`;
             selectCalDate(targetSelectDate);
