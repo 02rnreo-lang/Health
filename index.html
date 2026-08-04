@@ -115,7 +115,7 @@
         .rest-title { font-size: 1.4rem; color: #ffcc00; margin-bottom: 10px; font-weight: bold; }
         .rest-desc { color: var(--text-sub); font-size: 0.95rem; line-height: 1.5; }
 
-        /* 하단 네비게이션 (7개 탭 맞춤) */
+        /* 하단 네비게이션 */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -264,7 +264,7 @@
                             <li>1. 8~12회 가능한 무게, 마지막 1~2회가 힘든 강도</li>
                             <li>2. 휴식은 60~90초 유지</li>
                             <li>3. 컨디션에 따라 <b>+ 버튼</b>으로 세트 추가 가능</li>
-                            <li>4. 운동 완료 후 세트를 체크하면 <b>달력에 자동으로 기록</b>됩니다.</li>
+                            <li>4. 운동 완료 후 세트를 체크하면 <b>해당 날짜 달력에 자동으로 기록</b>됩니다.</li>
                         </ul>
                     </div>
                 `
@@ -281,6 +281,26 @@
             return `${y}-${m}-${d}`;
         }
 
+        // 현재 주의 특정 요일(mon, tue, wed, thu, fri)의 YYYY-MM-DD 날짜를 구함
+        function getDateOfDayInCurrentWeek(dayCode) {
+            const targetMap = { 'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5 };
+            const targetDay = targetMap[dayCode];
+            if (!targetDay) return getTodayStr();
+
+            const today = new Date();
+            const currentDayOfWeek = today.getDay(); // 0(일) ~ 6(토)
+            const adjustedCurrentDay = currentDayOfWeek === 0 ? 7 : currentDayOfWeek;
+
+            const diff = targetDay - adjustedCurrentDay;
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + diff);
+
+            const y = targetDate.getFullYear();
+            const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const d = String(targetDate.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
         function getLogs() {
             return JSON.parse(localStorage.getItem('gym_workout_logs') || '{}');
         }
@@ -289,12 +309,7 @@
             localStorage.setItem('gym_workout_logs', JSON.stringify(logs));
         }
 
-        function getTodaySets() {
-            return JSON.parse(localStorage.getItem(`sets_${getTodayStr()}`) || '[]');
-        }
-
-        const todayIndex = new Date().getDay(); // 0: 일, 1: 월, 2: 화, 3: 수, 4: 목, 5: 금, 6: 토
-        // 주말(토/일) 접속 시 기본 탭을 'info(요약)'로 지정
+        const todayIndex = new Date().getDay(); 
         const dayMap = { 0: 'info', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'info' };
         let currentDay = dayMap[todayIndex] || 'info'; 
 
@@ -303,7 +318,6 @@
 
         function renderApp() {
             let html = '';
-            const todaySets = getTodaySets();
 
             navItems.forEach(item => {
                 if (item.getAttribute('data-day') === currentDay) {
@@ -338,6 +352,9 @@
                         </div>
                     `;
                 } else {
+                    const targetDateStr = getDateOfDayInCurrentWeek(day);
+                    const daySets = JSON.parse(localStorage.getItem(`sets_${targetDateStr}`) || '[]');
+
                     data.exercises.forEach((ex, exIndex) => {
                         html += `
                             <div class="exercise-card">
@@ -350,7 +367,7 @@
                         `;
                         for (let i = 1; i <= ex.sets; i++) {
                             const setId = `${day}-${exIndex}-${i}`;
-                            const isCompleted = todaySets.includes(setId);
+                            const isCompleted = daySets.includes(setId);
                             html += `<div class="set-circle ${data.bgClass} ${isCompleted ? 'completed' : ''}" data-set-id="${setId}" onclick="toggleSet(this, '${setId}', '${day}')">${i}</div>`;
                         }
                         html += `<div class="set-circle add-btn" onclick="addSet('${day}', ${exIndex})">+</div>`;
@@ -370,13 +387,14 @@
             element.classList.toggle('completed');
             if (navigator.vibrate) navigator.vibrate(50);
 
+            const targetDateStr = getDateOfDayInCurrentWeek(day);
+
             const completedSets = [];
             document.querySelectorAll(`.day-section#${day} .set-circle.completed:not(.add-btn)`).forEach(el => {
                 if (el.dataset.setId) completedSets.push(el.dataset.setId);
             });
 
-            const today = getTodayStr();
-            localStorage.setItem(`sets_${today}`, JSON.stringify(completedSets));
+            localStorage.setItem(`sets_${targetDateStr}`, JSON.stringify(completedSets));
 
             const logs = getLogs();
             if (completedSets.length > 0) {
@@ -385,12 +403,12 @@
                     cleanTitle = cleanTitle.split(':')[1].trim();
                 }
 
-                logs[today] = {
+                logs[targetDateStr] = {
                     title: cleanTitle,
                     count: completedSets.length
                 };
             } else {
-                delete logs[today];
+                delete logs[targetDateStr];
             }
             saveLogs(logs);
         }
