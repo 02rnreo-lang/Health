@@ -77,8 +77,8 @@
 
         .sets-container { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .set-circle {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
             border: 2px solid #4a5568;
             display: flex;
@@ -115,7 +115,7 @@
         .rest-title { font-size: 1.4rem; color: #ffcc00; margin-bottom: 10px; font-weight: bold; }
         .rest-desc { color: var(--text-sub); font-size: 0.95rem; line-height: 1.5; }
 
-        /* 하단 네비게이션 */
+        /* 하단 네비게이션 (7개 탭 맞춤) */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -128,16 +128,12 @@
         }
         .nav-item {
             flex: 1;
-            padding: 12px 0;
+            padding: 14px 0;
             text-align: center;
-            font-size: 0.7rem;
-            letter-spacing: -0.5px;
+            font-size: 0.8rem;
             color: var(--text-sub);
             font-weight: bold;
             cursor: pointer;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
         .nav-item.active { color: #fff; background-color: rgba(255,255,255,0.1); }
 
@@ -150,8 +146,6 @@
         .bg-thu.completed { background-color: var(--accent-yellow); }
         .color-fri { border-color: var(--accent-purple); color: var(--accent-purple); }
         .bg-fri.completed { background-color: var(--accent-purple); }
-        .color-sat { border-color: var(--text-sub); color: var(--text-sub); }
-        .color-sun { border-color: var(--text-sub); color: var(--text-sub); }
 
         /* 달력 스타일 */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 1.2rem; font-weight: bold; }
@@ -196,8 +190,6 @@
         <div class="nav-item" data-day="wed">수</div>
         <div class="nav-item" data-day="thu">목</div>
         <div class="nav-item" data-day="fri">금</div>
-        <div class="nav-item" data-day="sat">토</div>
-        <div class="nav-item" data-day="sun">일</div>
         <div class="nav-item" data-day="cal">달력</div>
         <div class="nav-item" data-day="info">요약</div>
     </div>
@@ -249,12 +241,6 @@
                     { name: "삼두운동", sets: 4, point: "팔 전체 펌핑" }
                 ]
             },
-            "sat": {
-                title: "토요일: 휴식일", colorClass: "color-sat", type: "rest"
-            },
-            "sun": {
-                title: "일요일: 휴식일", colorClass: "color-sun", type: "rest"
-            },
             "cal": {
                 title: "운동 기록 달력", colorClass: "color-wed", type: "calendar"
             },
@@ -269,7 +255,7 @@
                             <li>• <b>수요일:</b> 🏖️ 휴식</li>
                             <li>• <b>목요일:</b> 어깨 + 하체</li>
                             <li>• <b>금요일:</b> 등 + 가슴 + 팔</li>
-                            <li>• <b>토·일:</b> 🏖️ 휴식</li>
+                            <li>• <b>토·일:</b> 🏖️ 주말 휴식</li>
                         </ul>
                     </div>
                     <div style="background:#1e222a; padding:15px; border-radius:10px;">
@@ -307,8 +293,9 @@
             return JSON.parse(localStorage.getItem(`sets_${getTodayStr()}`) || '[]');
         }
 
-        const todayIndex = new Date().getDay();
-        const dayMap = { 0: 'sun', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat' };
+        const todayIndex = new Date().getDay(); // 0: 일, 1: 월, 2: 화, 3: 수, 4: 목, 5: 금, 6: 토
+        // 주말(토/일) 접속 시 기본 탭을 'info(요약)'로 지정
+        const dayMap = { 0: 'info', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'info' };
         let currentDay = dayMap[todayIndex] || 'info'; 
 
         const container = document.getElementById('app-container');
@@ -393,7 +380,6 @@
 
             const logs = getLogs();
             if (completedSets.length > 0) {
-                // '월요일: 등 + 이두'에서 요일 부분을 제거하고 '등 + 이두'만 남겨서 기록
                 let cleanTitle = routineData[day]?.title || '운동 완료';
                 if (cleanTitle.includes(':')) {
                     cleanTitle = cleanTitle.split(':')[1].trim();
