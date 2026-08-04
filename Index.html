@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>주 5일 근비대 루틴</title>
-    <!-- 📌 독립 앱 인식을 위한 매니페스트 연결 -->
+    <title>주간 운동 루틴</title>
+    <!-- 독립 앱 실행을 위한 매니페스트 연결 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0f1115">
     <style>
@@ -102,6 +102,19 @@
             background: rgba(255,255,255,0.02);
         }
 
+        /* 휴식일 안내 카드 */
+        .rest-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .rest-emoji { font-size: 3.5rem; margin-bottom: 15px; }
+        .rest-title { font-size: 1.4rem; color: #ffcc00; margin-bottom: 10px; font-weight: bold; }
+        .rest-desc { color: var(--text-sub); font-size: 0.95rem; line-height: 1.5; }
+
         /* 하단 네비게이션 */
         .bottom-nav {
             position: fixed;
@@ -117,10 +130,14 @@
             flex: 1;
             padding: 12px 0;
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
+            letter-spacing: -0.5px;
             color: var(--text-sub);
             font-weight: bold;
             cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .nav-item.active { color: #fff; background-color: rgba(255,255,255,0.1); }
 
@@ -128,12 +145,13 @@
         .bg-mon.completed { background-color: var(--accent-red); }
         .color-tue { border-color: var(--accent-blue); color: var(--accent-blue); }
         .bg-tue.completed { background-color: var(--accent-blue); }
-        .color-wed { border-color: var(--accent-green); color: var(--accent-green); }
-        .bg-wed.completed { background-color: var(--accent-green); }
+        .color-wed { border-color: var(--text-sub); color: var(--text-sub); }
         .color-thu { border-color: var(--accent-yellow); color: var(--accent-yellow); }
         .bg-thu.completed { background-color: var(--accent-yellow); }
         .color-fri { border-color: var(--accent-purple); color: var(--accent-purple); }
         .bg-fri.completed { background-color: var(--accent-purple); }
+        .color-sat { border-color: var(--text-sub); color: var(--text-sub); }
+        .color-sun { border-color: var(--text-sub); color: var(--text-sub); }
 
         /* 달력 스타일 */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 1.2rem; font-weight: bold; }
@@ -162,7 +180,7 @@
 <body>
 
     <div class="top-header">
-        <h1>주 5일 근비대 루틴 (60분)</h1>
+        <h1>맞춤형 운동 루틴</h1>
         <div class="routine-summary">
             <span>⏱️ 60~90초 휴식</span>
             <span>🔄 8~12회 반복</span>
@@ -178,6 +196,8 @@
         <div class="nav-item" data-day="wed">수</div>
         <div class="nav-item" data-day="thu">목</div>
         <div class="nav-item" data-day="fri">금</div>
+        <div class="nav-item" data-day="sat">토</div>
+        <div class="nav-item" data-day="sun">일</div>
         <div class="nav-item" data-day="cal">달력</div>
         <div class="nav-item" data-day="info">요약</div>
     </div>
@@ -185,79 +205,80 @@
     <script>
         const routineData = {
             "mon": {
-                title: "월요일: 가슴 + 삼두", colorClass: "color-mon", bgClass: "bg-mon",
+                title: "월요일: 등 + 이두", colorClass: "color-mon", bgClass: "bg-mon", type: "workout",
                 exercises: [
-                    { name: "가슴운동 ①", sets: 5, point: "가장 무겁게 하는 주력 운동" },
-                    { name: "가슴운동 ②", sets: 4, point: "다른 각도 (중량 운동)" },
-                    { name: "가슴운동 ③", sets: 4, point: "고립 (펌핑) 운동" },
-                    { name: "삼두운동 ①", sets: 4, point: "" },
-                    { name: "삼두운동 ②", sets: 3, point: "삼두는 과하지 않게, 가슴 자극에 집중" }
+                    { name: "등운동 ①", sets: 5, point: "메인 풀링 운동 (중량 집중)" },
+                    { name: "등운동 ②", sets: 5, point: "두 번째 등 운동" },
+                    { name: "등운동 ③", sets: 4, point: "너비 및 두께 보완" },
+                    { name: "이두운동 ①", sets: 4, point: "바벨 또는 덤벨 컬" },
+                    { name: "이두운동 ②", sets: 4, point: "고립 펌핑 운동" }
                 ]
             },
             "tue": {
-                title: "화요일: 등 + 이두", colorClass: "color-tue", bgClass: "bg-tue",
+                title: "화요일: 가슴 + 삼두", colorClass: "color-tue", bgClass: "bg-tue", type: "workout",
                 exercises: [
-                    { name: "등운동 ①", sets: 5, point: "가장 무겁게 하는 주력 운동" },
-                    { name: "등운동 ②", sets: 4, point: "다른 각도" },
-                    { name: "등운동 ③", sets: 4, point: "고립 운동" },
-                    { name: "후면어깨", sets: 4, point: "후면어깨로 밸런스 보완" },
-                    { name: "이두운동 ①", sets: 4, point: "" },
-                    { name: "이두운동 ②", sets: 3, point: "이두는 보조적으로 자극" }
+                    { name: "가슴운동 ①", sets: 5, point: "메인 프레스 운동 (중량 집중)" },
+                    { name: "가슴운동 ②", sets: 5, point: "인클라인 또는 다른 각도" },
+                    { name: "가슴운동 ③", sets: 4, point: "딥스 또는 플라이 고립" },
+                    { name: "삼두운동 ①", sets: 4, point: "푸시다운 또는 익스텐션" },
+                    { name: "삼두운동 ②", sets: 4, point: "오버헤드 또는 딥스 보조" }
                 ]
             },
             "wed": {
-                title: "수요일: 하체", colorClass: "color-wed", bgClass: "bg-wed",
-                exercises: [
-                    { name: "하체운동 ① (대퇴사두)", sets: 5, point: "하체는 자세를 우선" },
-                    { name: "하체운동 ② (복합)", sets: 4, point: "①, ②는 복합 운동 위주" },
-                    { name: "하체운동 ③ (햄스트링)", sets: 4, point: "햄스트링 + 종아리까지 균형 있게" },
-                    { name: "하체운동 ④ (대퇴사두)", sets: 4, point: "" },
-                    { name: "종아리", sets: 4, point: "" }
-                ]
+                title: "수요일: 휴식일", colorClass: "color-wed", type: "rest"
             },
             "thu": {
-                title: "목요일: 어깨", colorClass: "color-thu", bgClass: "bg-thu",
+                title: "목요일: 어깨 + 하체", colorClass: "color-thu", bgClass: "bg-thu", type: "workout",
                 exercises: [
-                    { name: "프레스운동", sets: 5, point: "프레스운동을 가장 먼저 (바이킹 프레스 추천)" },
-                    { name: "측면어깨 ①", sets: 5, point: "측면 + 후면 균형 중요" },
-                    { name: "후면어깨", sets: 4, point: "승모는 필요 시만 추가" },
-                    { name: "측면어깨 ② 또는 승모", sets: 4, point: "" }
+                    { name: "어깨운동 ①", sets: 4, point: "오버헤드 프레스" },
+                    { name: "어깨운동 ②", sets: 4, point: "측면 삼각주 (사이드 레터럴 레이즈)" },
+                    { name: "어깨운동 ③", sets: 4, point: "후면 삼각근 보완" },
+                    { name: "하체운동 ①", sets: 5, point: "스쿼트 또는 메인 하체" },
+                    { name: "하체운동 ②", sets: 5, point: "레그 프레스 또는 복합 운동" },
+                    { name: "하체운동 ③", sets: 5, point: "익스텐션/컬 또는 런지" }
                 ]
             },
             "fri": {
-                title: "금요일: 하체 + 보완", colorClass: "color-fri", bgClass: "bg-fri",
+                title: "금요일: 등 + 가슴 + 팔", colorClass: "color-fri", bgClass: "bg-fri", type: "workout",
                 exercises: [
-                    { name: "하체운동 ⑤ (둔근·햄스트링)", sets: 5, point: "하체 후면 강화에 집중" },
-                    { name: "하체운동 ⑥", sets: 4, point: "상체 보완으로 밸런스 유지" },
-                    { name: "가슴운동 ④", sets: 4, point: "팔은 약한 부위 위주로" },
-                    { name: "등운동 ④", sets: 4, point: "" },
-                    { name: "팔 약점 (이두 또는 삼두)", sets: 3, point: "" }
+                    { name: "등운동 ①", sets: 4, point: "등 상부/중부 타겟" },
+                    { name: "등운동 ②", sets: 4, point: "등 하부 또는 로우" },
+                    { name: "가슴운동 ①", sets: 4, point: "가슴 상부 타겟" },
+                    { name: "가슴운동 ②", sets: 4, point: "가슴 플랫 또는 머신" },
+                    { name: "이두운동", sets: 4, point: "팔 전체 펌핑" },
+                    { name: "삼두운동", sets: 4, point: "팔 전체 펌핑" }
                 ]
             },
+            "sat": {
+                title: "토요일: 휴식일", colorClass: "color-sat", type: "rest"
+            },
+            "sun": {
+                title: "일요일: 휴식일", colorClass: "color-sun", type: "rest"
+            },
             "cal": {
-                title: "운동 기록 달력", colorClass: "color-wed"
+                title: "운동 기록 달력", colorClass: "color-wed", type: "calendar"
             },
             "info": {
-                title: "주간 총 볼륨 & TIP", colorClass: "color-thu", bgClass: "bg-thu",
+                title: "주간 루틴 & TIP", colorClass: "color-thu", type: "info",
                 content: `
                     <div style="background:#1e222a; padding:15px; border-radius:10px; margin-bottom:15px;">
-                        <h3 style="color:#ffcc00; margin-bottom:10px;">📊 세트 수 요약</h3>
-                        <ul style="list-style:none; line-height:1.8; color:#d1d8e0;">
-                            <li>• <b>가슴:</b> 17세트+α</li>
-                            <li>• <b>등:</b> 17세트+α</li>
-                            <li>• <b>어깨:</b> 22세트+α</li>
-                            <li>• <b>하체:</b> 30세트+α <span style="color:#2ed573;">(볼륨 높게!)</span></li>
-                            <li>• <b>팔(이두/삼두):</b> 17세트+α</li>
+                        <h3 style="color:#ffcc00; margin-bottom:10px;">📊 요일별 요약</h3>
+                        <ul style="list-style:none; line-height:1.8; color:#d1d8e0; font-size:0.9rem;">
+                            <li>• <b>월요일:</b> 등 + 이두</li>
+                            <li>• <b>화요일:</b> 가슴 + 삼두</li>
+                            <li>• <b>수요일:</b> 🏖️ 휴식</li>
+                            <li>• <b>목요일:</b> 어깨 + 하체</li>
+                            <li>• <b>금요일:</b> 등 + 가슴 + 팔</li>
+                            <li>• <b>토·일:</b> 🏖️ 휴식</li>
                         </ul>
                     </div>
                     <div style="background:#1e222a; padding:15px; border-radius:10px;">
-                        <h3 style="color:#ffcc00; margin-bottom:10px;">💡 진행 방법</h3>
+                        <h3 style="color:#ffcc00; margin-bottom:10px;">💡 이용 팁</h3>
                         <ul style="list-style:none; line-height:1.6; font-size:0.9rem; color:#d1d8e0;">
-                            <li>1. 운동 ① = 가장 무겁게 하는 주력 운동</li>
-                            <li>2. 8~12회 가능한 무게, 마지막 1~2회가 힘든 정도</li>
-                            <li>3. 휴식은 60~90초</li>
-                            <li>4. <b>+ 버튼을 눌러 세트 추가 가능</b></li>
-                            <li>5. 체크한 운동 세트는 <b>달력 탭에 자동으로 기록</b>됩니다.</li>
+                            <li>1. 8~12회 가능한 무게, 마지막 1~2회가 힘든 강도</li>
+                            <li>2. 휴식은 60~90초 유지</li>
+                            <li>3. 컨디션에 따라 <b>+ 버튼</b>으로 세트 추가 가능</li>
+                            <li>4. 운동 완료 후 세트를 체크하면 <b>달력에 자동으로 기록</b>됩니다.</li>
                         </ul>
                     </div>
                 `
@@ -286,8 +307,8 @@
             return JSON.parse(localStorage.getItem(`sets_${getTodayStr()}`) || '[]');
         }
 
-        const todayIndex = new Date().getDay();
-        const dayMap = { 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri' };
+        const todayIndex = new Date().getDay(); // 0: 일, 1: 월, 2: 화, 3: 수, 4: 목, 5: 금, 6: 토
+        const dayMap = { 0: 'sun', 1: 'mon', 2: 'tue', 3: 'wed', 4: 'thu', 5: 'fri', 6: 'sat' };
         let currentDay = dayMap[todayIndex] || 'info'; 
 
         const container = document.getElementById('app-container');
@@ -309,9 +330,9 @@
                 html += `<div class="day-section ${day === currentDay ? 'active' : ''}" id="${day}">`;
                 html += `<div class="day-title ${data.colorClass}">${data.title}</div>`;
                 
-                if (day === 'info') {
+                if (data.type === 'info') {
                     html += data.content;
-                } else if (day === 'cal') {
+                } else if (data.type === 'calendar') {
                     html += `
                         <div class="calendar-header">
                             <button class="calendar-btn" onclick="changeMonth(-1)">◀ 이전</button>
@@ -320,6 +341,14 @@
                         </div>
                         <div class="calendar-grid" id="calendar-grid"></div>
                         <div class="log-detail-box" id="log-detail-content"></div>
+                    `;
+                } else if (data.type === 'rest') {
+                    html += `
+                        <div class="rest-card">
+                            <div class="rest-emoji">🔋</div>
+                            <div class="rest-title">휴식 및 회복의 날</div>
+                            <div class="rest-desc">오늘은 가벼운 산책이나 스트레칭으로 컨디션을 조절하고<br>다음 운동을 위해 푹 쉬어주세요!</div>
+                        </div>
                     `;
                 } else {
                     data.exercises.forEach((ex, exIndex) => {
@@ -438,7 +467,10 @@
             const gridEl = document.getElementById('calendar-grid');
             if (gridEl) gridEl.innerHTML = gridHtml;
 
-            selectCalDate(todayStr);
+            // 현재 보고 있는 달에 오늘 날짜가 포함되어 있으면 오늘 선택, 아니면 해당 월 1일 선택
+            const currentYearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
+            const targetSelectDate = todayStr.startsWith(currentYearMonth) ? todayStr : `${currentYearMonth}-01`;
+            selectCalDate(targetSelectDate);
         }
 
         function changeMonth(delta) {
@@ -476,14 +508,16 @@
 
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
+                const targetNav = e.currentTarget;
                 navItems.forEach(nav => nav.classList.remove('active'));
-                e.target.classList.add('active');
+                targetNav.classList.add('active');
                 
-                currentDay = e.target.getAttribute('data-day');
+                currentDay = targetNav.getAttribute('data-day');
                 document.querySelectorAll('.day-section').forEach(section => {
                     section.classList.remove('active');
                 });
-                document.getElementById(currentDay).classList.add('active');
+                const targetSection = document.getElementById(currentDay);
+                if (targetSection) targetSection.classList.add('active');
                 
                 if (currentDay === 'cal') {
                     renderCalendar();
