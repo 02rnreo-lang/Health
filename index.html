@@ -141,7 +141,8 @@
         .bg-mon.completed { background-color: var(--accent-red); }
         .color-tue { border-color: var(--accent-blue); color: var(--accent-blue); }
         .bg-tue.completed { background-color: var(--accent-blue); }
-        .color-wed { border-color: var(--text-sub); color: var(--text-sub); }
+        .color-wed { border-color: var(--accent-green); color: var(--accent-green); }
+        .bg-wed.completed { background-color: var(--accent-green); }
         .color-thu { border-color: var(--accent-yellow); color: var(--accent-yellow); }
         .bg-thu.completed { background-color: var(--accent-yellow); }
         .color-fri { border-color: var(--accent-purple); color: var(--accent-purple); }
@@ -217,7 +218,11 @@
                 ]
             },
             "wed": {
-                title: "수요일: 휴식일", colorClass: "color-wed", type: "rest"
+                title: "수요일: 이두 + 삼두", colorClass: "color-wed", bgClass: "bg-wed", type: "workout",
+                exercises: [
+                    { name: "이두운동", sets: 4, point: "바벨/덤벨 컬 또는 머신 컬" },
+                    { name: "삼두운동", sets: 4, point: "케이블 푸시다운 또는 오버헤드 익스텐션" }
+                ]
             },
             "thu": {
                 title: "목요일: 어깨 + 하체", colorClass: "color-thu", bgClass: "bg-thu", type: "workout",
@@ -252,7 +257,7 @@
                         <ul style="list-style:none; line-height:1.8; color:#d1d8e0; font-size:0.9rem;">
                             <li>• <b>월요일:</b> 등 + 이두</li>
                             <li>• <b>화요일:</b> 가슴 + 삼두</li>
-                            <li>• <b>수요일:</b> 🏖️ 휴식</li>
+                            <li>• <b>수요일:</b> 이두 + 삼두</li>
                             <li>• <b>목요일:</b> 어깨 + 하체</li>
                             <li>• <b>금요일:</b> 등 + 가슴 + 팔</li>
                             <li>• <b>토·일:</b> 🏖️ 주말 휴식</li>
